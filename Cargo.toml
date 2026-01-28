@@ -1,0 +1,15 @@
+[package]
+name = "douyin_downloader"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "douyin_downloader"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+reqwest = { version = "0.13.1", features = ["stream"] }
+regex = "1.10"
+futures-util = "0.3"
+dirs = "6.0.0"

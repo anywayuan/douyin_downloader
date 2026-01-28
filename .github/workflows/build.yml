@@ -1,0 +1,119 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build - ${{ matrix.platform.os_name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os_name: Windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: douyin_downloader.exe
+            name: douyin_downloader-windows-x64.exe
+          - os_name: macOS-x86_64
+            os: macOS-latest
+            target: x86_64-apple-darwin
+            bin: douyin_downloader
+            name: douyin_downloader-macos-x64
+          - os_name: Linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bin: douyin_downloader
+            name: douyin_downloader-linux-x64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          target: ${{ matrix.platform.target }}
+          args: "--release"
+
+      - name: Rename and set permissions
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          if [ -f "${{ matrix.platform.bin }}" ]; then
+            mv "${{ matrix.platform.bin }}" "${{ matrix.platform.name }}"
+            # 为 macOS 和 Linux 添加执行权限
+            chmod +x "${{ matrix.platform.name }}" || true
+          fi
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform.name }}
+          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.name }}
+          # 保留文件权限
+          retention-days: 90
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      # 为所有非 Windows 文件添加执行权限
+      - name: Set execute permissions
+        run: |
+          find artifacts -type f ! -name "*.exe" -exec chmod +x {} \;
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          body: |
+            ## 📥 下载说明
+            
+            请根据你的操作系统下载对应的文件：
+            
+            ### Windows 用户
+            - 下载 `douyin_downloader-windows-x64.exe`
+            - 双击运行即可
+            
+            ### macOS 用户
+            - 下载 `douyin_downloader-macos-x64`
+            - 在终端中运行：
+            ```bash
+            chmod +x douyin_downloader-macos-x64
+            ./douyin_downloader-macos-x64
+            ```
+            - 如遇到安全警告，请参考 [README](../../blob/main/README.md#macos-用户注意事项-)
+
+            ### Linux 用户
+            - 下载 `douyin_downloader-linux-x64`
+            - 在终端中运行：
+              ```bash
+              chmod +x douyin_downloader-linux-x64
+              ./douyin_downloader-linux-x64
+              ```
+              ---
+            
+            ## ✨ 功能特点
+            
+            - ✅ 多清晰度选择 (360P/540P/720P/1080P)
+            - ✅ 无水印下载
+            - ✅ 支持所有链接格式
+            - ✅ 循环批量下载
+            
+            ## 📝 完整文档
+              
+            查看 [README.md](../../blob/main/README.md) 了解详细使用方法
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

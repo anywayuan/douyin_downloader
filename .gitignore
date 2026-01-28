@@ -1,0 +1,30 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+/tests/
+
+# 视频文件
+*.mp4
+*.avi
+*.mov
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+douyin_page.html
+LINK_FORMATS.md
+MULTI_QUALITY.md
+NO_WATERMARK.md
+TROUBLESHOOTING.md
