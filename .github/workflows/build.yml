@@ -1,5 +1,7 @@
 name: Build and Release
 
+run-name: "构建发布 v1.0.0 by anywayuan"
+
 on:
   push:
     tags:
